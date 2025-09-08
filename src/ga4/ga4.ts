@@ -85,6 +85,19 @@ export class Ga4 {
 		window.gtag('set' satisfies GtagCommand, 'user_properties', props)
 		console.log('[GA4] set user_properties', props)
 	}
+
+	// Compatibility no-ops for previous versions
+	static getClientId(): Promise<string | null> {
+		return Promise.resolve(null)
+	}
+
+	static enableFixedSession(): void {
+		/* no-op after rollback */
+	}
+
+	static disableFixedSession(): void {
+		/* no-op after rollback */
+	}
 }
 
 
