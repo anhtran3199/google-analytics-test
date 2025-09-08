@@ -27,6 +27,8 @@
 			<label class="row"><input type="checkbox" v-model="useFixedSession" @change="toggleFixedSession" /> Giữ cố định session_id</label>
 			<label class="row"><input type="checkbox" v-model="newUserPerEvent" @change="toggleNewUserPerEvent" /> Mỗi event là một user mới</label>
 			<div class="muted">client_id: {{ clientId || '...' }}</div>
+			<button :disabled="!isInitialized || locating" @click="captureLocation">Gửi vị trí (user_properties)</button>
+			<div class="muted">Vị trí: {{ locationText }}</div>
 		</div>
 	</section>
 
@@ -61,6 +63,8 @@ const isInitialized = ref<boolean>(false)
 const useFixedSession = ref<boolean>(false)
 const newUserPerEvent = ref<boolean>(false)
 const clientId = ref<string | null>(null)
+const locating = ref<boolean>(false)
+const locationText = ref<string>('chưa có')
 
 const selectedEvent = ref<'custom' | 'login' | 'sign_up' | 'purchase'>('custom')
 const eventName = ref<string>('custom_event')
@@ -125,6 +129,30 @@ async function toggleFixedSession() {
 
 function toggleNewUserPerEvent() {
 	Ga4.setNewUserPerEvent(newUserPerEvent.value)
+}
+
+function captureLocation() {
+	if (!('geolocation' in navigator)) {
+		alert('Trình duyệt không hỗ trợ Geolocation')
+		return
+	}
+	locating.value = true
+	navigator.geolocation.getCurrentPosition(
+		(pos) => {
+			const lat = Math.round(pos.coords.latitude * 1e6) / 1e6
+			const lng = Math.round(pos.coords.longitude * 1e6) / 1e6
+			const acc = Math.round((pos.coords.accuracy || 0))
+			locationText.value = `${lat}, ${lng} (±${acc}m)`
+			Ga4.setUserProperties({ geo_lat: lat, geo_lng: lng, geo_accuracy_m: acc })
+			locating.value = false
+		},
+		(err) => {
+			console.warn('Geolocation error', err)
+			alert('Không lấy được vị trí: ' + (err.message || ''))
+			locating.value = false
+		},
+		{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+	)
 }
 </script>
 
