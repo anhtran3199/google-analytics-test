@@ -13,32 +13,32 @@
 		<div class="steps">
 			<div class="step">
 				<div class="title">1) View list</div>
-				<button :disabled="!isInitialized" @click="sendListView">Gửi page_view /list</button>
+				<button @click="sendListView">Gửi page_view /list</button>
 			</div>
 			<div class="step">
 				<div class="title">2) View item</div>
-				<button :disabled="!isInitialized" @click="sendViewItem">Gửi page_view /product/:id</button>
+				<button @click="sendViewItem">Gửi page_view /product/:id</button>
 			</div>
 			<div class="step">
 				<div class="title">3) add_to_cart</div>
-				<button :disabled="!isInitialized" @click="sendAddToCart">Gửi add_to_cart</button>
+				<button @click="sendAddToCart">Gửi add_to_cart</button>
 			</div>
 			<div class="step">
 				<div class="title">4) begin_checkout</div>
-				<button :disabled="!isInitialized" @click="sendBeginCheckout">Gửi begin_checkout</button>
+				<button @click="sendBeginCheckout">Gửi begin_checkout</button>
 			</div>
 			<div class="step">
 				<div class="title">5) add_payment_info</div>
-				<button :disabled="!isInitialized" @click="sendAddPaymentInfo">Gửi add_payment_info</button>
+				<button @click="sendAddPaymentInfo">Gửi add_payment_info</button>
 			</div>
 			<div class="step">
 				<div class="title">6) purchase</div>
-				<button :disabled="!isInitialized" @click="sendPurchase">Gửi purchase</button>
+				<button @click="sendPurchase">Gửi purchase</button>
 			</div>
 		</div>
 
 		<div class="row">
-			<button :disabled="!isInitialized" @click="sendSequence">Gửi tuần tự tất cả bước</button>
+			<button @click="sendSequence">Gửi tuần tự tất cả bước</button>
 		</div>
 	</section>
 </template>
@@ -56,10 +56,12 @@ const currency = ref('USD')
 const stepDelayMs = ref(800)
 
 function sendListView() {
+	console.log('[FunnelTester] page_view /list')
 	Ga4.sendPageView({ page_path: '/list', page_title: 'List' })
 }
 
 function sendViewItem() {
+	console.log('[FunnelTester] view_item', productId.value)
 	Ga4.sendPageView({ page_path: `/product/${productId.value}`, page_title: 'Product Detail' })
 	Ga4.event('view_item', {
 		items: [{ item_id: productId.value, item_name: 'Product', price: value.value }],
@@ -75,6 +77,7 @@ function sendAddToCart() {
 }
 
 function sendBeginCheckout() {
+	console.log('[FunnelTester] begin_checkout')
 	Ga4.event('begin_checkout', {
 		currency: currency.value,
 		value: value.value,
