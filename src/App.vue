@@ -5,6 +5,7 @@
 			<nav class="tabs">
 				<router-link to="/" class="tab" active-class="active" exact-active-class="active">Basic</router-link>
 				<router-link to="/funnel" class="tab" active-class="active">Funnel</router-link>
+				<router-link to="/login" class="tab" active-class="active">Login</router-link>
 			</nav>
 		</header>
 		<router-view />

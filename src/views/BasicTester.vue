@@ -116,6 +116,10 @@ onMounted(async () => {
 		pagePath.value = location.pathname
 		Ga4.sendPageView({ page_path: pagePath.value, page_title: document.title })
 		clientId.value = await Ga4.getClientId()
+		const saved = localStorage.getItem('ga4tester_user_id')
+		if (saved) {
+			Ga4.setUser(saved)
+		}
 	}
 })
 
