@@ -1,70 +1,19 @@
 <template>
 	<div class="container">
-		<h1>GA4 Tester</h1>
-		<p class="subtitle">Nhập Measurement ID để khởi tạo và thử gửi sự kiện đến Google Analytics 4.</p>
-
-		<nav class="tabs">
-			<button :class="{ active: activeTab==='basic' }" @click="activeTab='basic'">Basic Tester</button>
-			<button :class="{ active: activeTab==='funnel' }" @click="activeTab='funnel'">Funnel Tester</button>
-		</nav>
-
-		<section v-if="activeTab==='basic'" class="card">
-			<h2>Khởi tạo GA4</h2>
-			<div class="row">
-				<input v-model="measurementId" placeholder="G-XXXXXXXXXX" />
-				<button @click="initializeGa4">Khởi tạo</button>
-			</div>
-			<p v-if="isInitialized" class="ok">Đã khởi tạo với Measurement ID: {{ measurementId }}</p>
-			<p v-else class="warn">Chưa khởi tạo</p>
-		</section>
-
-		<section v-if="activeTab==='basic'" class="card">
-			<h2>Page view</h2>
-			<div class="row">
-				<input v-model="pagePath" placeholder="/demo" />
-				<button :disabled="!isInitialized" @click="sendPageView">Gửi page_view</button>
-			</div>
-		</section>
-
-		<section v-if="activeTab==='basic'" class="card">
-			<h2>User properties</h2>
-			<div class="grid2">
-				<input v-model="userId" placeholder="user_id" />
-				<input v-model="userPropKey" placeholder="property key (vip_level)" />
-				<input v-model="userPropValue" placeholder="property value (gold)" />
-				<button :disabled="!isInitialized" @click="setUserProps">Cập nhật</button>
-				<label class="row"><input type="checkbox" v-model="useFixedSession" @change="toggleFixedSession" /> Giữ cố định session_id</label>
-				<div class="muted">client_id: {{ clientId || '...' }}</div>
-			</div>
-		</section>
-
-		<section v-if="activeTab==='basic'" class="card">
-			<h2>Gửi sự kiện</h2>
-			<div class="grid2">
-				<select v-model="selectedEvent">
-					<option value="custom">Tự do (custom)</option>
-					<option value="login">login</option>
-					<option value="sign_up">sign_up</option>
-					<option value="purchase">purchase</option>
-				</select>
-				<input v-model="eventName" :disabled="selectedEvent !== 'custom'" placeholder="event_name" />
-				<textarea v-model="eventParams" rows="4" placeholder='Tham số JSON, ví dụ: {"value": 9.99, "currency": "USD"}'></textarea>
-				<button :disabled="!isInitialized" @click="sendEvent">Gửi event</button>
-			</div>
-			<p class="note">Mẹo: Mở DevTools → Console để xem log. Kiểm tra Network tab (collect).</p>
-		</section>
-
-		<section v-if="activeTab==='funnel'">
-			<FunnelTester :initialized="isInitialized" />
-		</section>
+		<header class="header">
+			<h1>GA4 Tester</h1>
+			<nav class="tabs">
+				<router-link to="/" class="tab" active-class="active" exact-active-class="active">Basic</router-link>
+				<router-link to="/funnel" class="tab" active-class="active">Funnel</router-link>
+			</nav>
+		</header>
+		<router-view />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { Ga4 } from './ga4/ga4'
-import FunnelTester from './components/FunnelTester.vue'
-
 import { DEFAULT_MEASUREMENT_ID } from './config'
 const measurementId = ref<string>(DEFAULT_MEASUREMENT_ID || '')
 const pagePath = ref<string>('/')
@@ -78,7 +27,6 @@ const clientId = ref<string | null>(null)
 const selectedEvent = ref<'custom' | 'login' | 'sign_up' | 'purchase'>('custom')
 const eventName = ref<string>('custom_event')
 const eventParams = ref<string>('{}')
-const activeTab = ref<'basic' | 'funnel'>('basic')
 
 watch(selectedEvent, (v) => {
 	if (v !== 'custom') {
@@ -128,6 +76,7 @@ onMounted(async () => {
 		pagePath.value = location.pathname
 		Ga4.sendPageView({ page_path: pagePath.value, page_title: document.title })
 		clientId.value = await Ga4.getClientId()
+		;(window as any).__ga4_initialized = true
 	}
 })
 
@@ -146,26 +95,10 @@ async function toggleFixedSession() {
 	margin: 32px auto;
 	padding: 0 16px;
 }
-h1 { margin: 0 0 8px; }
-.subtitle { color: #666; margin: 0 0 16px; }
-.card {
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
-	padding: 16px;
-	margin: 16px 0;
-	background: #fff;
-}
-.row { display: flex; gap: 8px; align-items: center; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #cdd5df; border-radius: 6px; }
-button { padding: 8px 12px; border-radius: 6px; background: #0ea5e9; color: white; border: none; cursor: pointer; }
-button:disabled { background: #93c5fd; cursor: not-allowed; }
-.ok { color: #059669; }
-.warn { color: #b45309; }
-.note { color: #64748b; font-size: 12px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 8px; }
-.tabs button { background: #e5e7eb; color: #0f172a; }
-.tabs button.active { background: #0ea5e9; color: #fff; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tabs { display: flex; gap: 8px; }
+.tab { padding: 8px 12px; border-radius: 6px; background: #e5e7eb; color: #0f172a; text-decoration: none; }
+.tab.active { background: #0ea5e9; color: #fff; }
 </style>
 
 

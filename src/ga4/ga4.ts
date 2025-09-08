@@ -12,6 +12,7 @@ export class Ga4 {
 	private static measurementId: string | null = null
 	private static fixedSessionId: number | null = null
 	private static readonly SESSION_STORAGE_KEY = 'ga4tester_session_id'
+	private static newUserPerEvent = false
 
 	static async initialize(measurementId: string): Promise<void> {
 		if (this.loaded && this.measurementId === measurementId) return
@@ -55,6 +56,9 @@ export class Ga4 {
 			console.warn('[GA4] Not initialized')
 			return
 		}
+		if (this.newUserPerEvent) {
+			this.applyNewClientId()
+		}
 		const payload = { ...(params ?? {}) }
 		if (this.fixedSessionId) {
 			payload['session_id'] = this.fixedSessionId
@@ -67,6 +71,9 @@ export class Ga4 {
 		if (!this.measurementId) {
 			console.warn('[GA4] Not initialized')
 			return
+		}
+		if (this.newUserPerEvent) {
+			this.applyNewClientId()
 		}
 		const payload = { ...(params ?? {}) }
 		if (this.fixedSessionId) {
@@ -94,6 +101,29 @@ export class Ga4 {
 		}
 		window.gtag('set' satisfies GtagCommand, 'user_properties', props)
 		console.log('[GA4] set user_properties', props)
+	}
+
+	static setNewUserPerEvent(enabled: boolean): void {
+		this.newUserPerEvent = enabled
+		console.log('[GA4] newUserPerEvent', enabled)
+	}
+
+	private static applyNewClientId(): void {
+		if (!this.measurementId) return
+		const newCid = this.generateClientId()
+		try {
+			// Reconfigure with a fresh client_id so the next hit is treated as a new user
+			window.gtag('config' satisfies GtagCommand, this.measurementId, { client_id: newCid })
+			console.log('[GA4] applied new client_id', newCid)
+		} catch (e) {
+			console.warn('[GA4] failed to apply new client_id', e)
+		}
+	}
+
+	private static generateClientId(): string {
+		const now = Date.now()
+		const rand = Math.floor(Math.random() * 1_000_000_000)
+		return `${now}.${rand}`
 	}
 
 	static enableFixedSession(): void {

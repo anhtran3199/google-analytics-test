@@ -11,7 +11,8 @@
     "preview": "vite preview --port 5173"
   },
   "dependencies": {
-    "vue": "^3.4.38"
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
