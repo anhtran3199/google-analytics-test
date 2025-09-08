@@ -28,6 +28,8 @@
 				<input v-model="userPropKey" placeholder="property key (vip_level)" />
 				<input v-model="userPropValue" placeholder="property value (gold)" />
 				<button :disabled="!isInitialized" @click="setUserProps">Cập nhật</button>
+				<label class="row"><input type="checkbox" v-model="useFixedSession" @change="toggleFixedSession" /> Giữ cố định session_id</label>
+				<div class="muted">client_id: {{ clientId || '...' }}</div>
 			</div>
 		</section>
 
@@ -60,6 +62,8 @@ const userId = ref<string>('')
 const userPropKey = ref<string>('')
 const userPropValue = ref<string>('')
 const isInitialized = ref<boolean>(false)
+const useFixedSession = ref<boolean>(false)
+const clientId = ref<string | null>(null)
 
 const selectedEvent = ref<'custom' | 'login' | 'sign_up' | 'purchase'>('custom')
 const eventName = ref<string>('custom_event')
@@ -80,6 +84,7 @@ async function initializeGa4() {
 	}
 	await Ga4.initialize(measurementId.value)
 	isInitialized.value = true
+	clientId.value = await Ga4.getClientId()
 }
 
 function sendPageView() {
@@ -111,8 +116,17 @@ onMounted(async () => {
 		// Gửi page_view đầu tiên với đường dẫn thực tế trên GitHub Pages
 		pagePath.value = location.pathname
 		Ga4.sendPageView({ page_path: pagePath.value, page_title: document.title })
+		clientId.value = await Ga4.getClientId()
 	}
 })
+
+async function toggleFixedSession() {
+	if (useFixedSession.value) {
+		Ga4.enableFixedSession()
+	} else {
+		Ga4.disableFixedSession()
+	}
+}
 </script>
 
 <style scoped>

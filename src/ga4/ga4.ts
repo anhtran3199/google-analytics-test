@@ -10,6 +10,8 @@ declare global {
 export class Ga4 {
 	private static loaded = false
 	private static measurementId: string | null = null
+	private static fixedSessionId: number | null = null
+	private static readonly SESSION_STORAGE_KEY = 'ga4tester_session_id'
 
 	static async initialize(measurementId: string): Promise<void> {
 		if (this.loaded && this.measurementId === measurementId) return
@@ -53,8 +55,12 @@ export class Ga4 {
 			console.warn('[GA4] Not initialized')
 			return
 		}
-		window.gtag('event' satisfies GtagCommand, name, params ?? {})
-		console.log('[GA4] event', name, params)
+		const payload = { ...(params ?? {}) }
+		if (this.fixedSessionId) {
+			payload['session_id'] = this.fixedSessionId
+		}
+		window.gtag('event' satisfies GtagCommand, name, payload)
+		console.log('[GA4] event', name, payload)
 	}
 
 	static sendPageView(params?: { page_path?: string; page_title?: string }): void {
@@ -62,8 +68,12 @@ export class Ga4 {
 			console.warn('[GA4] Not initialized')
 			return
 		}
-		window.gtag('event' satisfies GtagCommand, 'page_view', params ?? {})
-		console.log('[GA4] page_view', params)
+		const payload = { ...(params ?? {}) }
+		if (this.fixedSessionId) {
+			payload['session_id'] = this.fixedSessionId
+		}
+		window.gtag('event' satisfies GtagCommand, 'page_view', payload)
+		console.log('[GA4] page_view', payload)
 	}
 
 	static setUser(userId?: string): void {
@@ -84,6 +94,45 @@ export class Ga4 {
 		}
 		window.gtag('set' satisfies GtagCommand, 'user_properties', props)
 		console.log('[GA4] set user_properties', props)
+	}
+
+	static enableFixedSession(): void {
+		const stored = localStorage.getItem(this.SESSION_STORAGE_KEY)
+		if (stored) {
+			const id = Number(stored)
+			if (!Number.isNaN(id)) {
+				this.fixedSessionId = id
+				console.log('[GA4] fixed session_id restored', id)
+				return
+			}
+		}
+		const nowSeconds = Math.floor(Date.now() / 1000)
+		this.fixedSessionId = nowSeconds
+		localStorage.setItem(this.SESSION_STORAGE_KEY, String(nowSeconds))
+		console.log('[GA4] fixed session_id set', nowSeconds)
+	}
+
+	static disableFixedSession(): void {
+		this.fixedSessionId = null
+		localStorage.removeItem(this.SESSION_STORAGE_KEY)
+		console.log('[GA4] fixed session_id disabled')
+	}
+
+	static getClientId(): Promise<string | null> {
+		return new Promise((resolve) => {
+			if (!this.measurementId || !window.gtag) {
+				resolve(null)
+				return
+			}
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(window as any).gtag('get', this.measurementId, 'client_id', (clientId: string) => {
+					resolve(clientId || null)
+				})
+			} catch {
+				resolve(null)
+			}
+		})
 	}
 }
 
