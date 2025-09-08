@@ -44,75 +44,75 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps } from 'vue'
-import { Ga4 } from '@/ga4/ga4'
+import { computed, defineProps, ref } from 'vue'
+import { Ga4 } from '../ga4/ga4'
 
 const props = defineProps<{ initialized: boolean }>()
 const isInitialized = computed(() => props.initialized)
 
-let productId = $ref('SKU-123')
-let value = $ref(199.99)
-let currency = $ref('USD')
-let stepDelayMs = $ref(800)
+const productId = ref('SKU-123')
+const value = ref(199.99)
+const currency = ref('USD')
+const stepDelayMs = ref(800)
 
 function sendListView() {
 	Ga4.sendPageView({ page_path: '/list', page_title: 'List' })
 }
 
 function sendViewItem() {
-	Ga4.sendPageView({ page_path: `/product/${productId}`, page_title: 'Product Detail' })
+	Ga4.sendPageView({ page_path: `/product/${productId.value}`, page_title: 'Product Detail' })
 	Ga4.event('view_item', {
-		items: [{ item_id: productId, item_name: 'Product', price: value }],
+		items: [{ item_id: productId.value, item_name: 'Product', price: value.value }],
 	})
 }
 
 function sendAddToCart() {
 	Ga4.event('add_to_cart', {
-		currency,
-		value,
-		items: [{ item_id: productId, item_name: 'Product', quantity: 1, price: value }],
+		currency: currency.value,
+		value: value.value,
+		items: [{ item_id: productId.value, item_name: 'Product', quantity: 1, price: value.value }],
 	})
 }
 
 function sendBeginCheckout() {
 	Ga4.event('begin_checkout', {
-		currency,
-		value,
-		items: [{ item_id: productId, item_name: 'Product', quantity: 1, price: value }],
+		currency: currency.value,
+		value: value.value,
+		items: [{ item_id: productId.value, item_name: 'Product', quantity: 1, price: value.value }],
 	})
 }
 
 function sendAddPaymentInfo() {
 	Ga4.event('add_payment_info', {
-		currency,
-		value,
+		currency: currency.value,
+		value: value.value,
 		payment_type: 'card',
-		items: [{ item_id: productId, item_name: 'Product', quantity: 1, price: value }],
+		items: [{ item_id: productId.value, item_name: 'Product', quantity: 1, price: value.value }],
 	})
 }
 
 function sendPurchase() {
 	Ga4.event('purchase', {
 		transaction_id: `T-${Date.now()}`,
-		currency,
-		value,
-		tax: Math.round(value * 0.1 * 100) / 100,
+		currency: currency.value,
+		value: value.value,
+		tax: Math.round(value.value * 0.1 * 100) / 100,
 		shipping: 0,
-		items: [{ item_id: productId, item_name: 'Product', quantity: 1, price: value }],
+		items: [{ item_id: productId.value, item_name: 'Product', quantity: 1, price: value.value }],
 	})
 }
 
 async function sendSequence() {
 	sendListView()
-	await wait(stepDelayMs)
+	await wait(stepDelayMs.value)
 	sendViewItem()
-	await wait(stepDelayMs)
+	await wait(stepDelayMs.value)
 	sendAddToCart()
-	await wait(stepDelayMs)
+	await wait(stepDelayMs.value)
 	sendBeginCheckout()
-	await wait(stepDelayMs)
+	await wait(stepDelayMs.value)
 	sendAddPaymentInfo()
-	await wait(stepDelayMs)
+	await wait(stepDelayMs.value)
 	sendPurchase()
 }
 
