@@ -3,7 +3,12 @@
 		<h1>GA4 Tester</h1>
 		<p class="subtitle">Nhập Measurement ID để khởi tạo và thử gửi sự kiện đến Google Analytics 4.</p>
 
-		<section class="card">
+		<nav class="tabs">
+			<button :class="{ active: activeTab==='basic' }" @click="activeTab='basic'">Basic Tester</button>
+			<button :class="{ active: activeTab==='funnel' }" @click="activeTab='funnel'">Funnel Tester</button>
+		</nav>
+
+		<section v-if="activeTab==='basic'" class="card">
 			<h2>Khởi tạo GA4</h2>
 			<div class="row">
 				<input v-model="measurementId" placeholder="G-XXXXXXXXXX" />
@@ -13,7 +18,7 @@
 			<p v-else class="warn">Chưa khởi tạo</p>
 		</section>
 
-		<section class="card">
+		<section v-if="activeTab==='basic'" class="card">
 			<h2>Page view</h2>
 			<div class="row">
 				<input v-model="pagePath" placeholder="/demo" />
@@ -21,7 +26,7 @@
 			</div>
 		</section>
 
-		<section class="card">
+		<section v-if="activeTab==='basic'" class="card">
 			<h2>User properties</h2>
 			<div class="grid2">
 				<input v-model="userId" placeholder="user_id" />
@@ -33,7 +38,7 @@
 			</div>
 		</section>
 
-		<section class="card">
+		<section v-if="activeTab==='basic'" class="card">
 			<h2>Gửi sự kiện</h2>
 			<div class="grid2">
 				<select v-model="selectedEvent">
@@ -48,12 +53,17 @@
 			</div>
 			<p class="note">Mẹo: Mở DevTools → Console để xem log. Kiểm tra Network tab (collect).</p>
 		</section>
+
+		<section v-if="activeTab==='funnel'">
+			<FunnelTester :initialized="isInitialized" />
+		</section>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { Ga4 } from './ga4/ga4'
+import FunnelTester from './components/FunnelTester.vue'
 
 import { DEFAULT_MEASUREMENT_ID } from './config'
 const measurementId = ref<string>(DEFAULT_MEASUREMENT_ID || '')
@@ -68,6 +78,7 @@ const clientId = ref<string | null>(null)
 const selectedEvent = ref<'custom' | 'login' | 'sign_up' | 'purchase'>('custom')
 const eventName = ref<string>('custom_event')
 const eventParams = ref<string>('{}')
+const activeTab = ref<'basic' | 'funnel'>('basic')
 
 watch(selectedEvent, (v) => {
 	if (v !== 'custom') {
@@ -152,6 +163,9 @@ button:disabled { background: #93c5fd; cursor: not-allowed; }
 .ok { color: #059669; }
 .warn { color: #b45309; }
 .note { color: #64748b; font-size: 12px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+.tabs button { background: #e5e7eb; color: #0f172a; }
+.tabs button.active { background: #0ea5e9; color: #fff; }
 </style>
 
 
