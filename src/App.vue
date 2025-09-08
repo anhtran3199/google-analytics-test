@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { Ga4 } from './ga4/ga4'
-import { DEFAULT_MEASUREMENT_ID } from './config'
+import { DEFAULT_MEASUREMENT_ID, DEBUG_MODE } from './config'
 const measurementId = ref<string>(DEFAULT_MEASUREMENT_ID || '')
 const pagePath = ref<string>('/')
 const userId = ref<string>('')
@@ -74,7 +74,7 @@ onMounted(async () => {
 		await initializeGa4()
 		// Gửi page_view đầu tiên với đường dẫn thực tế trên GitHub Pages
 		pagePath.value = location.pathname
-		Ga4.sendPageView({ page_path: pagePath.value, page_title: document.title })
+		Ga4.sendPageView({ page_path: pagePath.value, page_title: document.title, ...(DEBUG_MODE ? { debug_mode: true } : {}) })
 		clientId.value = await Ga4.getClientId()
 		;(window as any).__ga4_initialized = true
 	}
