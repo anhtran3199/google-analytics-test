@@ -27,8 +27,6 @@
 			<label class="row"><input type="checkbox" v-model="useFixedSession" @change="toggleFixedSession" /> Giữ cố định session_id</label>
 			<label class="row"><input type="checkbox" v-model="newUserPerEvent" @change="toggleNewUserPerEvent" /> Mỗi event là một user mới</label>
 			<div class="muted">client_id: {{ clientId || '...' }}</div>
-			<button :disabled="!isInitialized || locating" @click="captureLocation">Gửi vị trí (user_properties)</button>
-			<div class="muted">Vị trí: {{ locationText }}</div>
 		</div>
 	</section>
 
@@ -44,17 +42,6 @@
 			<input v-model="eventName" :disabled="selectedEvent !== 'custom'" placeholder="event_name" />
 			<textarea v-model="eventParams" rows="4" placeholder='Tham số JSON, ví dụ: {"value": 9.99, "currency": "USD"}'></textarea>
 			<button :disabled="!isInitialized" @click="sendEvent">Gửi event</button>
-			<label class="row"><input type="checkbox" v-model="includeLocation" /> Kèm vị trí</label>
-			<select v-model="selectedLocation" @change="setPresetLocation">
-				<option value="">Chọn vị trí có sẵn</option>
-				<option value="russia">Nga (Moscow)</option>
-				<option value="france">Pháp (Paris)</option>
-				<option value="japan">Nhật (Tokyo)</option>
-				<option value="australia">Úc (Sydney)</option>
-				<option value="uk">Anh (London)</option>
-				<option value="india">Ấn Độ (Delhi)</option>
-			</select>
-			<div class="muted">Vị trí: {{ locationText }}</div>
 		</div>
 		<p class="note">Mẹo: Mở DevTools → Console để xem log. Kiểm tra Network tab (collect).</p>
 	</section>
@@ -74,11 +61,6 @@ const isInitialized = ref<boolean>(false)
 const useFixedSession = ref<boolean>(false)
 const newUserPerEvent = ref<boolean>(false)
 const clientId = ref<string | null>(null)
-const locating = ref<boolean>(false)
-const locationText = ref<string>('chưa có')
-const includeLocation = ref<boolean>(false)
-const locationData = ref<Record<string, unknown>>({})
-const selectedLocation = ref<string>('')
 
 const selectedEvent = ref<'custom' | 'login' | 'sign_up' | 'purchase'>('custom')
 const eventName = ref<string>('custom_event')
@@ -121,9 +103,6 @@ function sendEvent() {
 		alert('JSON tham số không hợp lệ')
 		return
 	}
-	if (includeLocation.value) {
-		params = { ...params, ...locationData.value }
-	}
 	Ga4.event(eventName.value, params)
 }
 
@@ -152,53 +131,6 @@ function toggleNewUserPerEvent() {
 	Ga4.setNewUserPerEvent(newUserPerEvent.value)
 }
 
-function captureLocation() {
-	if (!('geolocation' in navigator)) {
-		alert('Trình duyệt không hỗ trợ Geolocation')
-		return
-	}
-	locating.value = true
-	navigator.geolocation.getCurrentPosition(
-		(pos) => {
-			const lat = Math.round(pos.coords.latitude * 1e6) / 1e6
-			const lng = Math.round(pos.coords.longitude * 1e6) / 1e6
-			const acc = Math.round((pos.coords.accuracy || 0))
-			locationText.value = `${lat}, ${lng} (±${acc}m)`
-			locationData.value = { geo_lat: lat, geo_lng: lng, geo_accuracy_m: acc }
-			Ga4.setUserProperties(locationData.value)
-			locating.value = false
-		},
-		(err) => {
-			console.warn('Geolocation error', err)
-			alert('Không lấy được vị trí: ' + (err.message || ''))
-			locating.value = false
-		},
-		{ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-	)
-}
-
-function setPresetLocation() {
-	const presets: Record<string, { lat: number; lng: number; name: string }> = {
-		russia: { lat: 55.7558, lng: 37.6176, name: 'Moscow, Nga' },
-		france: { lat: 48.8566, lng: 2.3522, name: 'Paris, Pháp' },
-		japan: { lat: 35.6762, lng: 139.6503, name: 'Tokyo, Nhật' },
-		australia: { lat: -33.8688, lng: 151.2093, name: 'Sydney, Úc' },
-		uk: { lat: 51.5074, lng: -0.1278, name: 'London, Anh' },
-		india: { lat: 28.7041, lng: 77.1025, name: 'Delhi, Ấn Độ' }
-	}
-	
-	const preset = presets[selectedLocation.value]
-	if (preset) {
-		locationText.value = `${preset.name} (${preset.lat}, ${preset.lng})`
-		locationData.value = { 
-			geo_lat: preset.lat, 
-			geo_lng: preset.lng, 
-			geo_accuracy_m: 1000,
-			geo_country: preset.name.split(', ')[1]
-		}
-		Ga4.setUserProperties(locationData.value)
-	}
-}
 </script>
 
 <style scoped>
